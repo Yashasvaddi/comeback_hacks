@@ -1,0 +1,40 @@
+From: S. Nair <s.nair@plant.example>
+To: A. Mehta <a.mehta@plant.example>
+Cc: R. Sharma <r.sharma@plant.example>
+Date: Mon, 13 May 2024 09:14:00 +0530
+Subject: V-200 relief valve set pressure - inspection finding
+
+Hi Anil,
+
+During the March inspection of pressure vessel V-200 in Unit 3, the relief valve set
+pressure was measured at 18.5 bar against a design set point of 18.0 bar. Wall thickness
+at the shell was 12.4 mm (minimum allowable 11.0 mm), so the vessel integrity is fine, but
+the relief valve set pressure is drifting high.
+
+Per OISD-STD-106 we should re-certify the relief valve. Can we schedule a bench test and
+re-set during the next shutdown window?
+
+Regards,
+Suresh Nair
+HSE Inspector
+
+---
+
+From: A. Mehta <a.mehta@plant.example>
+To: S. Nair <s.nair@plant.example>
+Cc: R. Sharma <r.sharma@plant.example>
+Date: Mon, 13 May 2024 11:02:00 +0530
+Subject: RE: V-200 relief valve set pressure - inspection finding
+
+Suresh,
+
+Agreed. I'll raise a work order for V-200 relief valve bench testing and re-certification
+under OISD-STD-106. Ravi, please coordinate the isolation under the Permit-to-Work system
+and flag it for the next shutdown.
+
+This is the second pressure-relief drift we've seen this year, so let's also add relief-valve
+set-pressure trending to the compliance review.
+
+Thanks,
+Anil Mehta
+Maintenance Engineer

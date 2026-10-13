@@ -1,0 +1,66 @@
+// CORTEX - Knowledge Graph Entity-Relationship Schema
+// Paste at app.eraser.io > New Diagram > Entity Relationship Diagram
+// ---------------------------------------------------------------
+
+Equipment [icon: cpu, color: orange] {
+  tag string pk
+  name string
+  description string
+  location string
+  manufacturer string
+}
+
+Document [icon: file-text, color: blue] {
+  id uuid pk
+  title string
+  doc_type string
+  filename string
+  source string
+  created_at datetime
+}
+
+Incident [icon: alert-triangle, color: red] {
+  id string pk
+  description string
+  date datetime
+  severity string
+  status string
+}
+
+Regulation [icon: book, color: purple] {
+  code string pk
+  name string
+  body string
+  category string
+}
+
+Person [icon: user, color: teal] {
+  name string pk
+  role string
+  department string
+}
+
+Location [icon: map-pin, color: green] {
+  name string pk
+  unit string
+  area string
+}
+
+Procedure [icon: list, color: yellow] {
+  title string pk
+  code string
+  revision string
+  category string
+}
+
+// Relationships
+Equipment ||--o{ Incident : "HAS_INCIDENT"
+Equipment ||--o{ Document : "DESCRIBED_BY"
+Equipment }o--|| Location : "LOCATED_AT"
+Equipment }o--o{ Person : "MAINTAINED_BY"
+Incident }o--o{ Person : "INVESTIGATED_BY"
+Incident }o--o{ Regulation : "REFERENCES_REGULATION"
+Document }o--o{ Regulation : "REFERENCES_REGULATION"
+Document }o--o{ Procedure : "DESCRIBES_PROCEDURE"
+Procedure }o--o{ Regulation : "REQUIRED_BY"
+Incident ||--o{ Incident : "SIMILAR_TO"

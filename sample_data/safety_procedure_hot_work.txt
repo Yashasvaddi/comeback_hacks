@@ -1,0 +1,37 @@
+STANDARD OPERATING PROCEDURE — SOP-SAF-014
+Title: Hot Work Permit and Execution Procedure
+Revision: 4 (2024-01-15)
+Owner: HSE Department
+Applies to: All units, including Unit 2 (Gas Compression) and Unit 3 (Crude Distillation)
+
+1. PURPOSE
+To control the risks of hot work (welding, grinding, cutting) in areas where flammable
+hydrocarbons may be present, in compliance with PESO licensing requirements and the
+Factory Act 1948.
+
+2. SCOPE
+Applies to all hot work outside designated workshops. Equipment commonly affected includes
+pumps (e.g. P-101), pressure vessels (e.g. V-200), and compressors (e.g. C-150).
+
+3. PERMIT REQUIREMENTS
+3.1 A Hot Work Permit must be issued by the Area Authority before work begins.
+3.2 Gas testing must confirm < 10% LEL before and during the work.
+3.3 Hazardous area classification per PESO must be reviewed; work in Zone 1/Zone 2
+    areas requires additional controls.
+3.4 A trained fire watch must be present during work and for 30 minutes afterward.
+
+4. PERSONAL PROTECTIVE EQUIPMENT (PPE)
+Flame-resistant clothing, welding shield, gloves, and respiratory protection as required by
+the job hazard analysis. PPE compliance is auditable under the Factory Act.
+
+5. ISOLATION
+All affected equipment must be isolated under the Permit-to-Work and lockout-tagout (LOTO)
+system before hot work commences.
+
+6. RESPONSIBILITIES
+- Area Authority (A. Mehta): permit issue and area control.
+- HSE Inspector (S. Nair): gas testing verification and PPE audit.
+- Executing Technician (R. Sharma): compliance with permit conditions.
+
+7. RECORDS
+Completed permits are retained for audit per OISD and Factory Act recordkeeping requirements.

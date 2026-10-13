@@ -1,0 +1,51 @@
+// CORTEX - AI Agent Architecture
+// Paste at app.eraser.io > New Diagram > Flowchart
+// ---------------------------------------------------------------
+
+UserQuery [shape: oval, label: "User Query"]
+
+Router [shape: diamond, label: "Route Query\nto Agent"]
+
+CopilotAgent [shape: rectangle, label: "Expert Copilot\nagents/copilot.py\nHybrid RAG + Graph\nSSE streaming"]
+
+RCAAgent [shape: rectangle, label: "Maintenance RCA\nagents/rca.py\nAsset tag detection\nFault tree analysis"]
+
+ComplianceAgent [shape: rectangle, label: "Compliance Intelligence\nagents/compliance.py\nOISD / PESO / Factory Act\n6-item checklist"]
+
+LessonsAgent [shape: rectangle, label: "Lessons Learned\nagents/lessons.py\nPattern discovery\nSimilarity search"]
+
+Retriever [shape: rectangle, label: "Hybrid Retriever\nagents/retriever.py\nQdrant top-k\n+ Neo4j subgraph"]
+
+QdrantSearch [shape: rectangle, label: "Qdrant Search\nsemantic similarity\ntop-6 chunks\n384-dim vectors"]
+
+GraphContext [shape: rectangle, label: "Neo4j Graph Context\nasset subgraph 1-2 hops\nequipment tag regex\n[A-Z]{1-3}-\\d{2,4}"]
+
+LLM_FAST [shape: rectangle, label: "gpt-oss:20b-cloud\nFAST tier\ncomplete_json()\nentity extract / classify"]
+
+LLM_SMART [shape: rectangle, label: "gpt-oss:120b-cloud\nSMART tier\nstream()\nreasoning / answers"]
+
+Response [shape: oval, label: "Structured Response\n+ Citations\n+ Confidence\n+ Asset Tags"]
+
+UserQuery --> Router
+Router --> CopilotAgent [label: "chat"]
+Router --> RCAAgent [label: "rca/{tag}"]
+Router --> ComplianceAgent [label: "compliance/scan"]
+Router --> LessonsAgent [label: "lessons"]
+
+CopilotAgent --> Retriever
+RCAAgent --> Retriever
+LessonsAgent --> Retriever
+
+Retriever --> QdrantSearch
+Retriever --> GraphContext
+
+QdrantSearch --> LLM_SMART
+GraphContext --> LLM_SMART
+
+CopilotAgent --> LLM_SMART
+RCAAgent --> LLM_FAST
+ComplianceAgent --> LLM_FAST
+LessonsAgent --> LLM_FAST
+
+LLM_FAST --> Response
+LLM_SMART --> Response

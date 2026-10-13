@@ -1,0 +1,39 @@
+// CORTEX - Hybrid RAG + Graph Retrieval Sequence
+// Paste at app.eraser.io > New Diagram > Sequence Diagram
+// ---------------------------------------------------------------
+
+// Participants
+User [color: gray]
+Frontend [color: blue]
+ChatRouter [color: orange]
+Retriever [color: orange]
+Qdrant [color: teal]
+Neo4j [color: cyan]
+LLM [color: purple]
+PostgreSQL [color: green]
+
+// Sequence
+User -> Frontend: Type query + Submit
+Frontend -> ChatRouter: POST /api/chat/stream\n{query, session_id}
+ChatRouter -> PostgreSQL: Load session history\n(last N messages)
+PostgreSQL --> ChatRouter: [Message history]
+
+ChatRouter -> Retriever: retrieve(query, top_k=6)
+Retriever -> Qdrant: similarity_search(embed(query), top_k=6)
+Qdrant --> Retriever: [{chunk, score, doc_id, title}]
+
+Retriever -> Retriever: Regex scan for asset tags\n[A-Z]{1,3}-\\d{2,4}
+
+Retriever -> Neo4j: MATCH (e:Equipment {tag})\nOPTIONAL MATCH (e)-[r]-(n)\nRETURN neighbors
+Neo4j --> Retriever: Asset subgraph\n(equipment + linked nodes)
+
+Retriever --> ChatRouter: {chunks, graph_context, citations, tags}
+
+ChatRouter -> LLM: stream(messages=[system, history, context, query])\ntier=SMART, temperature=0.3
+LLM --> Frontend: data: {"meta": {citations, confidence, tags}}\ndata: {"delta": "..."} x N\ndata: {"done": true}
+
+Frontend -> Frontend: SSE parse + immutable setMessages()\nReact StrictMode safe
+
+Frontend --> User: Streamed answer + citations + confidence badge
+
+ChatRouter -> PostgreSQL: Persist session turn\n(user + assistant messages)

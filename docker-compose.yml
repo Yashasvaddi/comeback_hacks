@@ -1,0 +1,110 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: ikb_postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-ikb}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-ikb_password}
+      POSTGRES_DB: ${POSTGRES_DB:-industrial_kb}
+    ports:
+      # Host 55432 to avoid clashing with native PostgreSQL (v13/v17 hold 5432/5433).
+      # In-Docker service-to-service still uses 5432 (see backend env override).
+      - "55432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-ikb}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  neo4j:
+    image: neo4j:5-community
+    container_name: ikb_neo4j
+    environment:
+      NEO4J_AUTH: ${NEO4J_USER:-neo4j}/${NEO4J_PASSWORD:-neo4j_password}
+      NEO4J_PLUGINS: '["apoc"]'
+      NEO4J_dbms_security_procedures_unrestricted: apoc.*
+    ports:
+      - "7474:7474"
+      - "7687:7687"
+    volumes:
+      - neo4j_data:/data
+      - neo4j_logs:/logs
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:7474 || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+  qdrant:
+    image: qdrant/qdrant:latest
+    container_name: ikb_qdrant
+    ports:
+      - "6333:6333"
+      - "6334:6334"
+    volumes:
+      - qdrant_data:/qdrant/storage
+
+  minio:
+    image: pgsty/minio:RELEASE.2026-08-04T00-00-00Z
+    container_name: ikb_minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ACCESS_KEY:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY:-minioadmin}
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build: ./backend
+    container_name: ikb_backend
+    env_file: .env
+    environment:
+      # Override host-based URLs with Docker service names for in-network calls
+      POSTGRES_URL: postgresql+asyncpg://${POSTGRES_USER:-ikb}:${POSTGRES_PASSWORD:-ikb_password}@postgres:5432/${POSTGRES_DB:-industrial_kb}
+      NEO4J_URI: bolt://neo4j:7687
+      QDRANT_URL: http://qdrant:6333
+      MINIO_ENDPOINT: minio:9000
+      # Reach the host's Ollama daemon (cloud-model proxy) from inside the container
+      OLLAMA_BASE_URL: "http://172.29.16.1:11434/v1"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    ports:
+      - "8081:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      neo4j:
+        condition: service_healthy
+      qdrant:
+        condition: service_started
+      minio:
+        condition: service_healthy
+    volumes:
+      - ./backend:/app
+
+  frontend:
+    build: ./frontend
+    container_name: ikb_frontend
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:8000
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:
+  neo4j_data:
+  neo4j_logs:
+  qdrant_data:
+  minio_data:

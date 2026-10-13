@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CORTEX Voice Assistant</title>
+  <style>
+.voice-panel{margin:24px 0;background:linear-gradient(145deg,#141d27,#101720);border:1px solid #26313e;border-radius:13px;padding:22px;box-shadow:0 18px 48px #00000020}
+.voice-panel-head{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:18px}.voice-panel h2{font:600 19px 'Space Grotesk',sans-serif;margin:0 0 4px}.voice-panel p{color:#8d9aaa;font-size:13px;margin:0}
+.voice-status{display:inline-flex;align-items:center;gap:8px;padding:7px 10px;border:1px solid #26313e;border-radius:99px;color:#7ce0bd;font-size:11px}
+.voice-controls{display:flex;gap:9px;flex-wrap:wrap;margin-bottom:18px}.voice-transcript,.voice-answer{padding:13px 14px;border:1px solid #26313e;background:#0d131b;border-radius:9px;min-height:52px;white-space:pre-wrap;overflow-wrap:anywhere}
+.voice-label{display:block;color:#8d9aaa;font-size:10px;letter-spacing:1px;font-weight:700;margin:0 0 7px}.voice-columns{display:grid;grid-template-columns:1fr 1fr;gap:12px}.voice-log{max-height:120px;overflow:auto;margin-top:14px}.voice-log-row{font-size:11px;color:#8d9aaa;padding:6px 0;border-top:1px solid #202b37}
+@media(max-width:760px){.voice-columns{grid-template-columns:1fr}.voice-panel-head{display:block}.voice-status{margin-top:12px}}
+
+  </style>
+</head>
+<body>
+  <main class="voice-panel" aria-labelledby="voice-title">
+    <div class="voice-panel-head">
+      <div>
+        <h2 id="voice-title">CORTEX Voice Assistant</h2>
+        <p>Speak naturally. Confirmed speech interrupts the current response.</p>
+      </div>
+      <span class="voice-status" id="voice-status">Stopped</span>
+    </div>
+    <div class="voice-controls">
+      <button class="button primary" id="voice-start" type="button">Start voice</button>
+      <button class="button secondary" id="voice-stop" type="button" disabled>Stop</button>
+    </div>
+    <div class="voice-columns">
+      <div>
+        <span class="voice-label">YOUR TRANSCRIPT</span>
+        <div class="voice-transcript" id="voice-transcript">Waiting for speech…</div>
+      </div>
+      <div>
+        <span class="voice-label">CORTEX RESPONSE</span>
+        <div class="voice-answer" id="voice-answer">Responses will appear here.</div>
+      </div>
+    </div>
+    <div class="voice-log" id="voice-log" aria-live="polite"></div>
+  </main>
+  <script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const startBtn=$("voice-start"), stopBtn=$("voice-stop"), statusEl=$("voice-status");
+  const transcriptEl=$("voice-transcript"), answerEl=$("voice-answer"), logEl=$("voice-log");
+  if (!startBtn || !stopBtn || !statusEl || !transcriptEl || !answerEl) return;
+  const SpeechRecognition=window.SpeechRecognition || window.webkitSpeechRecognition;
+  let ws=null, recognition=null, mic=null, ctx=null, analyser=null, raf=0, running=false;
+  let turn=0, activeTurn=0, lastFinal="", lastFinalAt=0, queue=[], audioBusy=false, currentAudio=null;
+  let speaking=false, speechSeen=false, silenceAt=0;
+  const RMS_THRESHOLD=0.035, SILENCE_MS=850;
+  const setStatus=s=>statusEl.textContent=s;
+  function log(s){if(!logEl)return;const d=document.createElement("div");d.className="voice-log-row";d.textContent=new Date().toLocaleTimeString()+" · "+s;logEl.prepend(d);}
+  function socketUrl(){const u=new URL(location.origin);u.protocol=u.protocol==="https:"?"wss:":"ws:";u.pathname="/ws/voice";return u.toString();}
+  function send(obj){if(ws?.readyState===WebSocket.OPEN)ws.send(JSON.stringify(obj));}
+  function clearPlayback(){queue=[];if(currentAudio){currentAudio.pause();currentAudio.src="";currentAudio=null;}audioBusy=false;speaking=false;}
+  function queueAudio(m){if(m.turn_id===activeTurn && m.audio){queue.push(m);playNext();}}
+  async function playNext(){
+    if(audioBusy||!queue.length||!running)return;
+    audioBusy=true;const item=queue.shift();
+    if(item.turn_id!==activeTurn){audioBusy=false;return playNext();}
+    let url;
+    try{
+      const bytes=Uint8Array.from(atob(item.audio),c=>c.charCodeAt(0));
+      url=URL.createObjectURL(new Blob([bytes],{type:item.mime||"audio/mpeg"}));
+      currentAudio=new Audio(url);speaking=true;setStatus("Speaking · listening for interruptions");
+      await new Promise(resolve=>{currentAudio.onended=resolve;currentAudio.onerror=resolve;currentAudio.play().catch(resolve);});
+    }finally{
+      if(url)URL.revokeObjectURL(url);currentAudio=null;audioBusy=false;speaking=false;
+      if(queue.length)playNext();else if(running)setStatus("Listening");
+    }
+  }
+  function confirmed(text){
+    text=text.trim();if(!text)return; // Empty STT can never interrupt.
+    const now=Date.now();if(text===lastFinal&&now-lastFinalAt<1800)return;
+    lastFinal=text;lastFinalAt=now;
+    if(activeTurn)send({type:"cancel",turn_id:activeTurn});
+    clearPlayback();activeTurn=++turn;transcriptEl.textContent=text;answerEl.textContent="";
+    setStatus("Thinking");send({type:"user_text",text,turn_id:activeTurn});log("Transcript sent: "+text);
+  }
+  function startVAD(stream){
+    ctx=new (AudioContext||webkitAudioContext)();const src=ctx.createMediaStreamSource(stream);
+    analyser=ctx.createAnalyser();analyser.fftSize=1024;src.connect(analyser);
+    const data=new Float32Array(analyser.fftSize);
+    const tick=()=>{if(!running||!analyser)return;analyser.getFloatTimeDomainData(data);
+      let sum=0;for(const x of data)sum+=x*x;const rms=Math.sqrt(sum/data.length);
+      if(rms>=RMS_THRESHOLD){speechSeen=true;silenceAt=0;}
+      else if(speechSeen){if(!silenceAt)silenceAt=performance.now();if(performance.now()-silenceAt>=SILENCE_MS){speechSeen=false;silenceAt=0;}}
+      raf=requestAnimationFrame(tick);
+    };tick();
+  }
+  function startSTT(){
+    if(!SpeechRecognition){setStatus("Speech recognition unavailable; try Chrome or Edge");return;}
+    recognition=new SpeechRecognition();recognition.continuous=true;recognition.interimResults=true;recognition.lang="en-US";
+    recognition.onresult=e=>{let finalText="",interim="";
+      for(let i=e.resultIndex;i<e.results.length;i++){const t=e.results[i][0].transcript.trim();if(!t)continue;if(e.results[i].isFinal)finalText+=t+" ";else interim+=t+" ";}
+      if(interim&&!finalText)setStatus(speaking?"Speaking · possible interruption":"Listening · recognizing");
+      if(finalText.trim())confirmed(finalText.trim());
+    };
+    recognition.onerror=e=>{log("STT error: "+e.error);if(["not-allowed","service-not-allowed"].includes(e.error)){setStatus("Microphone permission denied");stop();}};
+    recognition.onend=()=>{if(running)try{recognition.start();}catch(_){}};
+    recognition.start();
+  }
+  async function start(){
+    if(running)return;if(!navigator.mediaDevices?.getUserMedia){setStatus("Microphone requires HTTPS or localhost");return;}
+    try{
+      running=true;startBtn.disabled=true;stopBtn.disabled=false;setStatus("Connecting");
+      ws=new WebSocket(socketUrl());
+      ws.onmessage=e=>{let m;try{m=JSON.parse(e.data)}catch(_){return}
+        if(m.type==="ready"){log("Connected to "+m.model+"; TTS "+m.tts_voice);}
+        else if(m.type==="status"&&m.turn_id===activeTurn&&m.status==="thinking")setStatus("Thinking");
+        else if(m.type==="assistant_text_delta"&&m.turn_id===activeTurn)answerEl.textContent+=m.text;
+        else if(m.type==="audio_chunk")queueAudio(m);
+        else if(m.type==="turn_done"&&m.turn_id===activeTurn&&!queue.length&&!audioBusy)setStatus("Listening");
+        else if(m.type==="error"){setStatus("Error: "+m.message);log(m.message);}
+      };
+      ws.onerror=()=>log("WebSocket error");
+      await new Promise((resolve,reject)=>{const timer=setTimeout(()=>reject(Error("WebSocket timed out")),10000);
+        ws.addEventListener("open",()=>{clearTimeout(timer);resolve()},{once:true});
+        ws.addEventListener("error",()=>{clearTimeout(timer);reject(Error("WebSocket failed"))},{once:true});});
+      mic=await navigator.mediaDevices.getUserMedia({audio:true});startVAD(mic);startSTT();setStatus("Listening");log("Microphone active; local VAD enabled");
+    }catch(e){setStatus("Unable to start: "+e.message);log(e.message);stop();}
+  }
+  function stop(){
+    running=false;if(recognition){recognition.onend=null;try{recognition.stop()}catch(_){}recognition=null;}
+    if(raf)cancelAnimationFrame(raf);raf=0;if(mic)mic.getTracks().forEach(t=>t.stop());mic=null;
+    if(ctx)ctx.close().catch(()=>{});ctx=null;analyser=null;
+    if(activeTurn)send({type:"cancel",turn_id:activeTurn});clearPlayback();
+    if(ws){ws.onclose=null;ws.close();ws=null;}
+    startBtn.disabled=false;stopBtn.disabled=true;setStatus("Stopped");log("Voice assistant stopped");
+  }
+  startBtn.addEventListener("click",start);stopBtn.addEventListener("click",stop);stopBtn.disabled=true;
+})();
+
+  </script>
+</body>
+</html>

@@ -1,0 +1,32 @@
+OEM MAINTENANCE MANUAL (EXCERPT)
+Equipment: KSB Etanorm 080-065-200 Centrifugal Pump
+Plant Asset Tag: P-101
+Manufacturer: KSB
+Section 7 — Bearing and Lubrication Maintenance
+
+7.1 BEARING SPECIFICATION
+Drive-end and non-drive-end bearings: SKF 6310 deep-groove ball bearings.
+Maximum continuous operating temperature: 80 degC.
+Recommended vibration limit: 4.5 mm/s RMS per ISO 10816-3 for this frame size.
+
+7.2 LUBRICATION SCHEDULE
+For continuous duty above 60 degC ambient, re-grease bearings every 3 months using
+Shell Gadus S2 V220 or equivalent NLGI 2 lithium-complex grease. Over-greasing causes
+churning and heat; under-greasing accelerates spalling.
+
+7.3 ALIGNMENT
+Shaft-to-driver alignment must be verified with a laser alignment tool after any coupling
+work. Acceptable parallel misalignment: <= 0.05 mm. Misalignment is a leading cause of
+premature bearing wear and seal failure.
+
+7.4 MECHANICAL SEAL
+Mechanical seal type: John Crane Type 21. Inspect seal faces for scoring during any bearing
+service. Replace if face wear exceeds 0.1 mm.
+
+7.5 CONDITION MONITORING
+Trend bearing temperature and vibration continuously. A sustained rise in vibration above
+4.5 mm/s RMS indicates developing bearing or alignment problems and warrants inspection.
+
+7.6 WARNING
+Operation with known misalignment or degraded lubrication will void the bearing warranty and
+significantly shorten service life.

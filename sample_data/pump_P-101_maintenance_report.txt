@@ -1,0 +1,40 @@
+MAINTENANCE WORK ORDER — WO-2024-0512
+Asset Tag: P-101
+Equipment: Centrifugal Pump, Model KSB Etanorm 080-065-200
+Location: Unit 3 — Crude Distillation Area
+Date: 2024-05-12
+Performed by: R. Sharma (Mechanical Technician), supervised by A. Mehta (Maintenance Engineer)
+
+PROBLEM REPORTED
+Operators reported abnormal vibration and intermittent high bearing temperature
+on Pump P-101 over the preceding two weeks. Vibration trend exceeded 7.1 mm/s RMS,
+above the 4.5 mm/s alarm threshold per ISO 10816-3.
+
+WORK PERFORMED
+1. Pump isolated, locked out, and tagged out (LOTO permit PTW-3391).
+2. Drive-end and non-drive-end bearings (SKF 6310) removed and inspected.
+3. Drive-end bearing showed spalling on the outer race — confirmed bearing wear.
+4. Mechanical seal (John Crane Type 21) inspected; light scoring on seal faces.
+5. Both bearings replaced; mechanical seal replaced.
+6. Shaft alignment checked with laser alignment tool; corrected to 0.05 mm.
+7. Pump re-commissioned; post-repair vibration measured at 2.3 mm/s RMS.
+
+ROOT CAUSE (PRELIMINARY)
+Bearing wear accelerated by misalignment introduced during the previous coupling
+replacement in WO-2024-0188 (February 2024). Contributing factor: inadequate
+lubrication interval — grease replenishment was on a 6-month cycle versus the
+OEM-recommended 3-month cycle for this duty.
+
+RECOMMENDATIONS
+- Revise lubrication PM frequency for P-101 to 3 months.
+- Add laser alignment verification as a mandatory step after any coupling work.
+- Trend bearing temperature via the existing condition-monitoring system.
+
+PARTS USED
+- SKF 6310 bearing x2
+- John Crane Type 21 mechanical seal x1
+- Shell Gadus S2 V220 grease
+
+COMPLIANCE
+Work carried out under OISD-STD-105 (maintenance of rotating equipment) and the
+plant Permit-to-Work system per Factory Act requirements.

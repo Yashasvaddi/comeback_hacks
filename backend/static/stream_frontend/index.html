@@ -1,0 +1,289 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CORTEX · Live Telemetry</title>
+  <style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+:root{--bg:#0a0e14;--panel:#111821;--panel2:#151e29;--border:#26313e;--text:#eef3f8;--muted:#8d9aaa;--accent:#7ce0bd;--accent2:#4fbf9b;--red:#ff777d;--amber:#ffbf69;--blue:#88baff;--shadow:0 18px 48px #00000020}
+*{box-sizing:border-box}html{min-height:100%;background:var(--bg)}body{margin:0;background:radial-gradient(ellipse at 70% -20%,#1c3340 0,transparent 40%),var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;line-height:1.5}a{color:inherit;text-decoration:none}button{font:inherit}.app-shell{min-height:100vh;display:grid;grid-template-columns:245px minmax(0,1fr)}.sidebar{background:#0d131b;border-right:1px solid var(--border);padding:28px 18px;display:flex;flex-direction:column;min-height:100vh;position:sticky;top:0;height:100vh}.brand{display:flex;align-items:center;gap:12px;padding:0 8px 36px}.brand-mark{width:38px;height:38px;border-radius:12px;background:var(--accent);color:#09221c;display:grid;place-items:center;font:700 23px 'Space Grotesk',sans-serif;box-shadow:0 0 25px #7ce0bd26}.brand strong{display:block;font:700 17px 'Space Grotesk',sans-serif;letter-spacing:2px}.brand small{display:block;color:var(--muted);font-size:10px;margin-top:1px}.nav-label,.eyebrow{font-size:10px;letter-spacing:1.6px;font-weight:700;color:#718194}.nav-label{padding:0 12px 12px}.nav-link{display:flex;gap:12px;align-items:center;color:#9aa8b8;padding:12px;border-radius:9px;margin:2px 0;font-weight:600;transition:.18s}.nav-link span{font-size:17px;width:18px;text-align:center}.nav-link:hover,.nav-link.active{background:#1b2b33;color:var(--accent)}.nav-link.active{box-shadow:inset 2px 0 var(--accent)}.sidebar-bottom{margin-top:auto;border-top:1px solid var(--border);padding:18px 8px 0;display:flex;align-items:center;gap:9px;color:var(--muted);font-size:12px}.main{padding:36px clamp(22px,4vw,58px) 24px;max-width:1600px;width:100%;margin:0 auto}.topbar{display:flex;justify-content:space-between;gap:24px;align-items:flex-start;margin-bottom:28px}.topbar h1{font:600 clamp(28px,3vw,38px)/1.15 'Space Grotesk',sans-serif;margin:9px 0 8px;letter-spacing:-1.2px}.subhead,.section-heading p,.panel-heading p{color:var(--muted);margin:0;font-size:13px}.top-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.pill{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--border);background:#101821;border-radius:100px;padding:8px 12px;color:#cbd4df;font-size:12px}.status-dot{width:8px;height:8px;border-radius:50%;background:#7d8996;display:inline-block;flex:none}.status-dot.online{background:var(--accent);box-shadow:0 0 12px #7ce0bd80}.status-dot.offline{background:var(--red)}.button{border:1px solid transparent;border-radius:8px;padding:10px 14px;display:inline-flex;justify-content:center;align-items:center;gap:8px;cursor:pointer;font-weight:700;font-size:12px;transition:transform .15s,background .15s,border-color .15s}.button:hover:not(:disabled){transform:translateY(-1px)}.button:disabled{opacity:.5;cursor:not-allowed}.primary{background:var(--accent);color:#09231b}.primary:hover:not(:disabled){background:#a1f2d5}.secondary{background:#151e29;color:#dbe5ef;border-color:var(--border)}.secondary:hover:not(:disabled){border-color:#506174}.quiet{background:transparent;color:var(--muted);border-color:var(--border);padding:7px 10px}.link-button{white-space:nowrap}.summary-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-bottom:34px}.summary-card,.panel{background:linear-gradient(145deg,#141d27,#101720);border:1px solid var(--border);border-radius:13px;box-shadow:var(--shadow)}.summary-card{padding:18px 20px;min-width:0}.summary-label{font-size:10px;letter-spacing:1.2px;color:var(--muted);font-weight:700;display:block;margin-bottom:12px}.summary-card>strong{font:600 23px 'Space Grotesk',sans-serif;display:block;overflow-wrap:anywhere}.summary-card small{display:block;color:var(--muted);font-size:11px;margin-top:7px}.muted{font-size:14px;color:var(--muted);font-weight:400}.section-heading,.panel-heading{display:flex;align-items:center;justify-content:space-between;gap:14px}.section-heading{margin-bottom:16px}.section-heading h2,.panel-heading h2{font:600 19px 'Space Grotesk',sans-serif;margin:0 0 4px}.live-tag{display:flex;align-items:center;gap:8px;color:var(--accent);font-size:10px;letter-spacing:1.4px;font-weight:700;border:1px solid #2d5c50;border-radius:6px;padding:6px 9px}.pulse{height:6px;width:6px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 4px #7ce0bd19;animation:pulse 1.5s infinite}@keyframes pulse{50%{box-shadow:0 0 0 7px #7ce0bd00}}.sensor-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:13px;margin-bottom:28px}.sensor-card{background:#111821;border:1px solid var(--border);border-radius:12px;padding:16px 17px;min-width:0;position:relative;overflow:hidden}.sensor-card.warning{border-color:#8a4b4d;background:linear-gradient(135deg,#21191e,#121820)}.sensor-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:13px}.sensor-icon{width:31px;height:31px;border-radius:8px;background:#1e2b34;color:var(--accent);display:grid;place-items:center;font-size:17px}.sensor-status{font-size:9px;letter-spacing:.8px;font-weight:700;padding:4px 7px;border-radius:5px}.sensor-status.ok{color:var(--accent);background:#16332c}.sensor-status.alert{color:var(--red);background:#422327}.sensor-name{font-size:12px;color:#aab6c4;margin-bottom:5px}.sensor-value{font:600 27px 'Space Grotesk',sans-serif;letter-spacing:-.5px;white-space:nowrap}.sensor-value span{font:500 12px 'DM Sans',sans-serif;color:var(--muted);margin-left:5px;letter-spacing:0}.meter{height:4px;background:#283340;border-radius:8px;margin:14px 0 10px;overflow:hidden}.meter span{display:block;height:100%;background:var(--accent);border-radius:8px;transition:width .35s}.warning .meter span{background:var(--red)}.sensor-foot{display:flex;justify-content:space-between;gap:8px;color:#7f8c9b;font-size:10px}.sensor-key{color:#667485;white-space:nowrap}.panel{padding:22px;margin-bottom:22px}.panel-heading{margin-bottom:20px}.event-list{display:flex;flex-direction:column}.event-row{display:flex;align-items:center;gap:12px;padding:12px 0;border-top:1px solid #202b37;min-width:0}.event-symbol{width:25px;height:25px;flex:none;border-radius:50%;display:grid;place-items:center;font-size:12px;font-weight:700;background:#1d2c36;color:var(--blue)}.event-symbol.warning{background:#402326;color:var(--red)}.event-symbol.success{background:#17352c;color:var(--accent)}.event-copy{min-width:0;flex:1}.event-copy strong{font-size:12px;display:block;font-weight:600}.event-copy small{font-size:11px;color:var(--muted);display:block;overflow-wrap:anywhere}.event-row time{color:#788696;font-size:10px;white-space:nowrap}.empty-state{border:1px dashed #2a3644;border-radius:10px;padding:30px;color:var(--muted);text-align:center;grid-column:1/-1}.empty-state.compact{padding:18px;border:0}footer{color:#687686;font-size:10px;text-align:center;padding:18px 0 0}.control-layout{display:grid;grid-template-columns:1fr 1fr;gap:18px}.control-layout .panel{margin-bottom:18px}.icon-badge{width:35px;height:35px;display:grid;place-items:center;background:#1c2c34;color:var(--accent);border-radius:9px;font-size:18px}.dataset-options{display:flex;flex-direction:column;gap:9px}.dataset-option{width:100%;display:flex;align-items:center;text-align:left;gap:12px;padding:13px;border-radius:10px;border:1px solid var(--border);background:#101720;color:var(--text);cursor:pointer;transition:.15s}.dataset-option:hover{border-color:#506174}.dataset-option.selected{background:#142820;border-color:#4c9e82;box-shadow:inset 0 0 0 1px #4c9e8240}.dataset-icon{height:38px;width:38px;display:grid;place-items:center;border-radius:8px;background:#202b36;color:#aebdca;font:600 12px 'Space Grotesk',sans-serif}.selected .dataset-icon{background:#204638;color:var(--accent)}.dataset-option>span:nth-child(2){flex:1}.dataset-option strong,.dataset-option small{display:block}.dataset-option strong{font-size:12px}.dataset-option small{font-size:11px;color:var(--muted);margin-top:3px}.radio-mark{width:15px;height:15px;border:1px solid #627080;border-radius:50%;position:relative}.selected .radio-mark{border-color:var(--accent)}.selected .radio-mark:after{content:"";position:absolute;inset:3px;background:var(--accent);border-radius:50%}.dataset-option.unavailable{opacity:.45}.callout{display:flex;flex-direction:column;gap:4px;background:#17252a;border:1px solid #2c4c4c;border-radius:8px;padding:12px 14px;margin:17px 0;color:#a9bbc5;font-size:11px}.callout strong{font-size:11px;color:var(--accent)}.callout.warning{background:#2b2420;border-color:#574333;margin-bottom:0}.callout.warning strong{color:var(--amber)}.full-width{width:100%}.feedback{min-height:18px;margin-top:10px;font-size:11px;color:var(--muted)}.success-text{color:var(--accent)}.error-text{color:var(--red)}.connection-state{display:flex;align-items:center;gap:15px;padding:20px 0 23px}.connection-graphic{width:54px;height:54px;flex:none;border-radius:50%;background:#1b2d34;display:grid;place-items:center;position:relative;color:var(--accent);font-size:22px}.pulse-ring{position:absolute;inset:5px;border:1px solid #7ce0bd65;border-radius:50%;animation:pulse 2s infinite}.connection-state strong{font:600 16px 'Space Grotesk',sans-serif}.connection-state p{font-size:11px;color:var(--muted);margin:4px 0 0}.button-row{display:flex;gap:9px;flex-wrap:wrap}.mini-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:22px 0}.mini-stats div{padding:12px 10px;background:#0e151d;border:1px solid #202b37;border-radius:8px;min-width:0}.mini-stats span{display:block;color:var(--muted);font-size:10px}.mini-stats strong{display:block;font:600 16px 'Space Grotesk',sans-serif;margin-top:6px;overflow-wrap:anywhere}.activity-panel{margin-top:2px}
+@media(max-width:1100px){.summary-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.sensor-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.app-shell{grid-template-columns:205px minmax(0,1fr)}}
+@media(max-width:760px){.app-shell{display:block}.sidebar{position:static;height:auto;min-height:0;padding:15px 16px;display:block;border-right:0;border-bottom:1px solid var(--border)}.brand{padding:0 4px 14px}.nav-label{display:none}.sidebar .nav-link{display:inline-flex;margin:0 4px 0 0;padding:8px 10px;font-size:11px}.sidebar-bottom{display:none}.main{padding:25px 16px 20px}.topbar{display:block}.top-actions{margin-top:18px}.control-layout{grid-template-columns:1fr}.sensor-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.panel{padding:17px}.topbar h1{font-size:30px}}
+@media(max-width:430px){.summary-grid{gap:8px}.summary-card{padding:14px}.summary-card>strong{font-size:19px}.sensor-grid{grid-template-columns:1fr}.sensor-card{padding:16px}.event-row{gap:8px}.event-row time{font-size:9px}.top-actions{align-items:flex-start}.mini-stats{gap:6px}.mini-stats div{padding:10px 7px}.mini-stats strong{font-size:14px}}
+
+/* Three-level sensor status */
+.sensor-card.warning{border-color:#9a792e;background:linear-gradient(135deg,#292418,#121820)}
+.sensor-card.critical{border-color:#8a4b4d;background:linear-gradient(135deg,#21191e,#121820)}
+.sensor-status.warn{color:#ffd166;background:#493a1b}
+.sensor-status.critical{color:#ff777d;background:#422327}
+.warning .meter span{background:#ffbf69}
+.critical .meter span{background:#ff777d}
+
+</style>
+
+
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <a class="brand" href="/stream-ui/"><span class="brand-mark">C</span><span><strong>CORTEX</strong><small>Industrial Intelligence</small></span></a>
+      <div class="nav-label">MONITORING</div>
+      <a class="nav-link active" href="/stream-ui/"><span>◉</span> Live telemetry</a>
+      <a class="nav-link" href="/stream-ui/control"><span>⚙</span> Stream control</a>
+      <div class="sidebar-bottom"><span class="status-dot" id="sidebar-dot"></span><span id="sidebar-status">Connecting to stream…</span></div>
+    </aside>
+    <main class="main">
+      <header class="topbar">
+        <div><div class="eyebrow">OPERATIONS / MONITORING</div><h1>Live telemetry</h1><p class="subhead">Real-time sensor readings from the active dataset.</p></div>
+        <div class="top-actions"><span class="pill"><i class="status-dot" id="connection-dot"></i><span id="connection-label">Connecting</span></span><button class="button secondary" id="reconnect-btn">Reconnect</button></div>
+      </header>
+      <section class="summary-grid">
+        <article class="summary-card"><span class="summary-label">ACTIVE DATASET</span><strong id="dataset-name">—</strong><small id="dataset-description">Waiting for stream data</small></article>
+        <article class="summary-card"><span class="summary-label">CURRENT RECORD</span><strong id="row-number">— <span class="muted">/ 60</span></strong><small id="record-time">No timestamp received</small></article>
+        <article class="summary-card"><span class="summary-label">SENSOR WARNINGS</span><strong id="warning-count">0</strong><small>Based on demo warning thresholds</small></article>
+        <article class="summary-card"><span class="summary-label">STREAM STATE</span><strong id="stream-state">Waiting</strong><small id="stream-note">Connect to begin receiving records</small></article>
+      </section>
+      <section class="section-heading"><div><h2>Sensor readings</h2><p>Each card updates when a new CSV row arrives.</p></div><span class="live-tag"><span class="pulse"></span> LIVE</span></section>
+      <div class="sensor-grid" id="sensor-grid">
+        <div class="empty-state">Waiting for the first sensor record…</div>
+      </div>
+      <section class="panel incident-panel">
+        <div class="panel-heading"><div><h2>Session event log</h2><p>Events detected by this browser session.</p></div><button class="button quiet" id="clear-events">Clear log</button></div>
+        <div id="event-list" class="event-list"><div class="empty-state compact">No events yet.</div></div>
+      </section>
+      <footer>Demo telemetry · Synthetic CSV data · Not connected to physical equipment</footer>
+    </main>
+  </div>
+<script>
+// Same-origin REST and WebSocket endpoints: served by this FastAPI application.
+window.CORTEX_CONFIG = {
+  API_BASE: window.location.origin,
+  WS_PATH: "/ws/data-stream"
+};
+</script>
+
+<script>
+(() => {
+  const config = window.CORTEX_CONFIG || {};
+  const base = String(config.API_BASE || window.location.origin).replace(/\/+$/, "");
+  const wsPath = config.WS_PATH || "/ws/data-stream";
+  const apiUrl = (path) => `${base}${path.startsWith("/") ? path : `/${path}`}`;
+  const wsUrl = () => {
+    const url = new URL(base);
+    url.protocol = url.protocol === "https:" ? "wss:" : "ws:";
+    url.pathname = `${url.pathname.replace(/\/+$/, "")}${wsPath.startsWith("/") ? wsPath : `/${wsPath}`}`;
+    url.search = "";
+    url.hash = "";
+    return url.toString();
+  };
+  const formatKey = (key) => String(key).replaceAll("_", " ").replace(/\b\w/g, c => c.toUpperCase());
+  const thresholds = {
+    vib_de: { label: "Drive-end vibration", unit: "mm/s", warn: 4.5, direction: "high" },
+    bearing_temp: { label: "Bearing temperature", unit: "°C", warn: 85, direction: "high" },
+    motor_current: { label: "Motor current", unit: "A", warn: 75, direction: "high" },
+    motor_winding_temp: { label: "Motor winding temperature", unit: "°C", warn: 85, direction: "high" },
+    discharge_pressure: { label: "Discharge pressure", unit: "bar", warn: 10, direction: "high" },
+    flow: { label: "Flow", unit: "m³/h", warn: 140, direction: "low" },
+    suction_pressure: { label: "Suction pressure", unit: "bar", warn: 2, direction: "low" },
+    vib_nde: { label: "Non-drive-end vibration", unit: "mm/s", warn: 4.5, direction: "high" },
+    pump_speed: { label: "Pump speed", unit: "rpm", warn: 2800, direction: "low" },
+    seal_pot_level: { label: "Seal pot level", unit: "%", warn: 30, direction: "low" },
+    lube_oil_temp: { label: "Lube oil temperature", unit: "°C", warn: 65, direction: "high" },
+    seal_pressure: { label: "Seal pressure", unit: "bar", warn: 2.5, direction: "low" }
+  };
+  const getSeverity = (key, value) => {
+    const rule = thresholds[key];
+    const n = Number(value);
+    if (!rule || !Number.isFinite(n)) return "normal";
+    if (rule.direction === "high") {
+      if (n > rule.warn * 1.25) return "critical";
+      if (n > rule.warn) return "warning";
+    } else {
+      if (n < rule.warn * 0.75) return "critical";
+      if (n < rule.warn) return "warning";
+    }
+    return "normal";
+  };
+  const isWarning = (key, value) => getSeverity(key, value) !== "normal";
+  const setConnection = (connected, label) => {
+    const dot = document.getElementById("connection-dot");
+    const sideDot = document.getElementById("sidebar-dot");
+    const connLabel = document.getElementById("connection-label");
+    const sideLabel = document.getElementById("sidebar-status");
+    [dot, sideDot].forEach(el => {
+      if (el) el.classList.toggle("online", connected);
+      if (el) el.classList.toggle("offline", !connected);
+    });
+    if (connLabel) connLabel.textContent = label || (connected ? "Connected" : "Disconnected");
+    if (sideLabel) sideLabel.textContent = label || (connected ? "Connected" : "Disconnected");
+  };
+  const request = async (path, options = {}) => {
+    const response = await fetch(apiUrl(path), {
+      ...options,
+      headers: { ...(options.body ? { "Content-Type": "application/json" } : {}), ...(options.headers || {}) }
+    });
+    const text = await response.text();
+    let data = {};
+    try { data = text ? JSON.parse(text) : {}; } catch { data = { detail: text }; }
+    if (!response.ok) throw new Error(data.detail || data.message || `HTTP ${response.status}`);
+    return data;
+  };
+  const esc = (value) => String(value ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  window.Cortex = { apiUrl, wsUrl, thresholds, isWarning, getSeverity, setConnection, request, formatKey, esc };
+})();
+
+</script>
+
+<script>
+(() => {
+  const C = window.Cortex;
+  const $ = id => document.getElementById(id);
+  let socket = null;
+  let lastWarnings = {};
+  let eventCount = 0;
+  const events = [];
+  const knownMeta = new Set(["timestamp", "time", "datetime", "dataset", "dataset_name", "row", "position", "type", "event"]);
+  function addEvent(title, detail, kind = "info") {
+    events.unshift({ title, detail, kind, time: new Date().toLocaleTimeString() });
+    if (events.length > 30) events.pop();
+    renderEvents();
+  }
+  function renderEvents() {
+    $("event-list").innerHTML = events.length ? events.map(e => `<div class="event-row"><span class="event-symbol ${e.kind}">${e.kind === "warning" ? "!" : e.kind === "success" ? "✓" : "i"}</span><div class="event-copy"><strong>${C.esc(e.title)}</strong><small>${C.esc(e.detail)}</small></div><time>${C.esc(e.time)}</time></div>`).join("") : '<div class="empty-state compact">No events yet.</div>';
+  }
+  function sensorEntries(record) {
+    return Object.entries(record || {}).filter(([k, v]) => !knownMeta.has(k.toLowerCase()) && v !== null && v !== "" && Number.isFinite(Number(v)));
+  }
+  function drawSensors(record) {
+    const entries = sensorEntries(record);
+    let warnings = 0;
+    const currentWarnings = {};
+    $("sensor-grid").innerHTML = entries.length ? entries.map(([key, raw]) => {
+      const rule = C.thresholds[key] || { label: C.formatKey(key), unit: "", warn: null, direction: "high" };
+      const value = Number(raw);
+      const severity = C.getSeverity(key, value);
+      const warning = severity !== "normal";
+      if (warning) { warnings++; currentWarnings[key] = severity; }
+      const previous = lastWarnings[key] || "normal";
+      if (severity !== previous && severity === "warning") addEvent("Warning threshold crossed", `${rule.label}: ${value} ${rule.unit}`.trim(), "warning");
+      if (severity !== previous && severity === "critical") addEvent("Critical threshold crossed", `${rule.label}: ${value} ${rule.unit}`.trim(), "warning");
+      if (severity === "normal" && previous !== "normal") addEvent("Sensor back to normal", `${rule.label}: ${value} ${rule.unit}`.trim(), "success");
+      const range = rule.warn ? Math.max(1, Math.min(100, value / (rule.warn * 1.25) * 100)) : 0;
+      const fill = rule.direction === "low" && rule.warn ? Math.max(0, Math.min(100, value / (rule.warn * 1.6) * 100)) : range;
+      const statusLabel = severity === "critical" ? "CRITICAL" : severity === "warning" ? "WARNING" : "NORMAL";
+      const statusClass = severity === "critical" ? "critical" : severity === "warning" ? "warn" : "ok";
+      return `<article class="sensor-card ${severity}">
+        <div class="sensor-top"><span class="sensor-icon">${iconFor(key)}</span><span class="sensor-status ${statusClass}">${statusLabel}</span></div>
+        <div class="sensor-name">${C.esc(rule.label)}</div>
+        <div class="sensor-value">${C.esc(value.toLocaleString(undefined, { maximumFractionDigits: 2 }))}<span>${C.esc(rule.unit)}</span></div>
+        <div class="meter"><span style="width:${fill}%"></span></div>
+        <div class="sensor-foot"><span>${rule.warn ? `${rule.direction === "high" ? "Warning above" : "Warning below"} ${rule.warn} ${rule.unit}` : C.esc(key)}</span><span class="sensor-key">${C.esc(key)}</span></div>
+      </article>`;
+    }).join("") : '<div class="empty-state">Record received, but no numeric sensor fields were found.</div>';
+    lastWarnings = currentWarnings;
+    $("warning-count").textContent = warnings;
+  }
+  function iconFor(key) {
+    if (key.includes("temp")) return "♨";
+    if (key.includes("vib")) return "〰";
+    if (key.includes("pressure")) return "◉";
+    if (key.includes("flow")) return "↗";
+    if (key.includes("current")) return "ϟ";
+    if (key.includes("speed")) return "⟳";
+    if (key.includes("level")) return "▥";
+    return "⌁";
+  }
+  function handleMessage(msg) {
+    // Backend payloads use `event` (for example, {event:"data", data:{...}}),
+    // while some versions use `type`. Accept both formats.
+    const eventType = msg.type || msg.event || "";
+
+    if (eventType === "data" || eventType === "record" || eventType === "sensor_data") {
+      const record = msg.data || msg.record || msg.payload || msg;
+      const dataset = msg.dataset || record.dataset || record.dataset_name || "Active dataset";
+      const row = msg.row ?? msg.position ?? record.row ?? record.position ?? "—";
+      const total = msg.total_records ?? msg.total ?? 60;
+      const timestamp = msg.timestamp || record.timestamp || record.time || record.datetime || "Timestamp unavailable";
+
+      $("dataset-name").textContent = dataset;
+      $("dataset-description").textContent = "Streaming synthetic sensor records";
+      $("row-number").innerHTML = `${C.esc(row)} <span class="muted">/ ${C.esc(total)}</span>`;
+      $("record-time").textContent = timestamp;
+      $("stream-state").textContent = "Streaming";
+      $("stream-note").textContent = "Receiving records from WebSocket";
+      drawSensors(record);
+      return;
+    }
+
+    if (eventType === "stream_started" || eventType === "stream_start") {
+      $("stream-state").textContent = "Streaming";
+      $("stream-note").textContent = "Receiving records from WebSocket";
+      addEvent("Stream started", msg.dataset || "Backend stream started", "success");
+      return;
+    }
+
+    if (eventType === "dataset_switched") {
+      $("dataset-name").textContent = msg.dataset || "Dataset switched";
+      $("row-number").innerHTML = `0 <span class="muted">/ ${C.esc(msg.total_records ?? 60)}</span>`;
+      $("stream-state").textContent = "Switching";
+      lastWarnings = {};
+      addEvent("Dataset switched", msg.dataset || "The active dataset changed", "info");
+      return;
+    }
+
+    if (eventType === "end_of_dataset") {
+      $("stream-state").textContent = "Completed";
+      $("stream-note").textContent = "End of dataset reached";
+      addEvent("End of dataset", msg.dataset || "No more rows available", "info");
+      return;
+    }
+
+    if (eventType === "error") {
+      addEvent("Stream error", msg.message || msg.detail || "Unknown WebSocket error", "warning");
+      $("stream-state").textContent = "Stream error";
+      return;
+    }
+
+    addEvent("Stream event", eventType || JSON.stringify(msg), "info");
+  }
+  function connect() {
+    if (socket && (socket.readyState === WebSocket.OPEN || socket.readyState === WebSocket.CONNECTING)) return;
+    try {
+      socket = new WebSocket(C.wsUrl());
+      C.setConnection(false, "Connecting");
+      $("stream-state").textContent = "Connecting";
+      socket.onopen = () => {
+        C.setConnection(true, "Connected");
+        $("stream-state").textContent = "Connected";
+        $("stream-note").textContent = "WebSocket connection is open";
+        addEvent("Connected to stream", C.wsUrl(), "success");
+      };
+      socket.onmessage = event => {
+        try { handleMessage(JSON.parse(event.data)); }
+        catch { addEvent("Invalid message", event.data.slice(0, 180), "warning"); }
+      };
+      socket.onerror = () => addEvent("WebSocket error", "Check the public WebSocket proxy and backend logs.", "warning");
+      socket.onclose = () => {
+        C.setConnection(false, "Disconnected");
+        if ($("stream-state").textContent !== "Completed") $("stream-state").textContent = "Disconnected";
+        addEvent("Disconnected", "The WebSocket connection closed.", "info");
+      };
+    } catch (err) {
+      C.setConnection(false, "Connection failed");
+      addEvent("Connection failed", err.message, "warning");
+    }
+  }
+  $("reconnect-btn").addEventListener("click", () => {
+    if (socket) socket.close();
+    socket = null;
+    connect();
+  });
+  $("clear-events").addEventListener("click", () => { events.length = 0; renderEvents(); });
+  window.addEventListener("beforeunload", () => { if (socket) socket.close(); });
+  connect();
+})();
+
+</script>
+</body>
+</html>

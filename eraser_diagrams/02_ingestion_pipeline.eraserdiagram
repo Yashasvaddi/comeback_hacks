@@ -1,0 +1,31 @@
+// CORTEX - Document Ingestion Pipeline
+// Paste at app.eraser.io > New Diagram > Flowchart
+// ---------------------------------------------------------------
+
+Upload [shape: oval, label: "User Uploads\nDocument"]
+Store [shape: rectangle, label: "Store to MinIO\n(object storage)"]
+Parse [shape: rectangle, label: "Parse Document\nPDF / Excel / DOCX\nEmail / Image+OCR"]
+TypeInfer [shape: diamond, label: "Infer Doc Type?\nmaintenance_report\noem_manual\nincident_report\nsafety_procedure\nregulation\ngeneral"]
+Chunk [shape: rectangle, label: "Chunk Text\n512 tokens / 50 overlap\nsliding window\n_hard_split() for oversized"]
+Embed [shape: rectangle, label: "Embed Chunks\nall-MiniLM-L6-v2\n384 dimensions\n(local, no API call)"]
+Qdrant [shape: rectangle, label: "Upsert to Qdrant\nvector + payload\n(doc_id, title, score)"]
+CacheCheck [shape: diamond, label: "SHA256 Cache\nhit?"]
+EntityExtract [shape: rectangle, label: "Entity Extraction\ngpt-oss:20b-cloud\nEquipment / Person\nIncident / Regulation\nProcedure / Location\nRelationships"]
+CacheStore [shape: rectangle, label: "Store in\nExtraction Cache\n(SHA256 keyed)"]
+GraphBuild [shape: rectangle, label: "Build Knowledge Graph\nNeo4j MERGE upsert\nEquipment / Document\nIncident / Regulation\nPerson / Location / Procedure"]
+StatusUpdate [shape: rectangle, label: "Update Job Status\nPostgreSQL\nstatus = completed"]
+Done [shape: oval, label: "Document Ready\nfor Query"]
+
+Upload --> Store
+Store --> Parse
+Parse --> TypeInfer
+TypeInfer --> Chunk
+Chunk --> Embed
+Embed --> Qdrant
+Qdrant --> CacheCheck
+CacheCheck --> EntityExtract [label: "miss"]
+CacheCheck --> GraphBuild [label: "hit"]
+EntityExtract --> CacheStore
+CacheStore --> GraphBuild
+GraphBuild --> StatusUpdate
+StatusUpdate --> Done

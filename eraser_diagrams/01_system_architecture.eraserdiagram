@@ -1,0 +1,54 @@
+// CORTEX - System Architecture Diagram
+// Paste this at app.eraser.io > New Diagram > Cloud Architecture
+// ---------------------------------------------------------------
+
+colorMode light
+styleMode shadow
+direction right
+
+// ── USER FACING ──────────────────────────────────────────────
+User [icon: user, color: gray]
+
+// ── FRONTEND ─────────────────────────────────────────────────
+Frontend Group [color: blue] {
+  Next.js App [icon: nextjs, color: blue, label: "Next.js 14\nPort 3000"]
+  Tailwind UI [icon: css, color: blue, label: "Tailwind CSS\nFoundry Design"]
+}
+
+// ── BACKEND ──────────────────────────────────────────────────
+Backend Group [color: orange] {
+  FastAPI [icon: fastapi, color: orange, label: "FastAPI\nPort 8000"]
+  Routers [icon: code, color: orange, label: "Routers\ningest / chat / graph / docs"]
+  Agents [icon: cpu, color: orange, label: "AI Agents\nCopilot / RCA / Compliance / Lessons"]
+  Parsers [icon: file, color: orange, label: "Parsers\nPDF / Excel / DOCX / Email / Image"]
+}
+
+// ── LLM LAYER ────────────────────────────────────────────────
+LLM Group [color: purple] {
+  Ollama [icon: server, color: purple, label: "Ollama Daemon\nPort 11434"]
+  FastModel [icon: zap, color: purple, label: "gpt-oss:20b-cloud\nFAST tier (bulk)"]
+  SmartModel [icon: brain, color: purple, label: "gpt-oss:120b-cloud\nSMART tier (reasoning)"]
+}
+
+// ── STORAGE ──────────────────────────────────────────────────
+Storage Group [color: green] {
+  PostgreSQL [icon: postgresql, color: green, label: "PostgreSQL\nPort 55432\ndocuments / jobs / sessions"]
+  Neo4j [icon: database, color: cyan, label: "Neo4j\nPort 7474 / 7687\nKnowledge Graph"]
+  Qdrant [icon: database, color: teal, label: "Qdrant\nPort 6333\nVector Store (384-dim)"]
+  MinIO [icon: cloud, color: yellow, label: "MinIO\nPort 9000\nObject Storage"]
+}
+
+// ── CONNECTIONS ───────────────────────────────────────────────
+User > Next.js App: Browser
+Next.js App > FastAPI: HTTP / SSE
+FastAPI > Routers
+Routers > Agents: dispatch
+Routers > Parsers: parse document
+Agents > Ollama: OpenAI-compat API
+Ollama > FastModel
+Ollama > SmartModel
+Agents > Qdrant: semantic search
+Agents > Neo4j: graph context
+FastAPI > PostgreSQL: async SQLAlchemy
+Parsers > MinIO: store raw file
+FastAPI > MinIO: retrieve file

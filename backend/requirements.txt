@@ -1,0 +1,41 @@
+# ── Web framework ──
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+python-multipart==0.0.20
+pydantic==2.10.4
+pydantic-settings==2.7.1
+
+# ── LLM (Ollama Cloud via OpenAI-compatible API) ──
+openai==1.59.6
+
+# ── Embeddings (local) ──
+sentence-transformers==3.3.1
+
+# ── Data stores ──
+asyncpg==0.30.0
+sqlalchemy[asyncio]==2.0.36
+neo4j==5.27.0
+qdrant-client==1.12.2
+minio==7.2.13
+
+# ── Agent orchestration ──
+langgraph==0.2.61
+langchain-core==0.3.28
+
+# ── Document parsing ──
+pypdf==5.1.0
+pandas==2.2.3
+openpyxl==3.1.5
+python-docx==1.1.2
+paddleocr==2.9.1
+paddlepaddle==2.6.2
+Pillow==11.0.0
+
+# ── Utilities ──
+httpx==0.28.1
+tiktoken==0.8.0
+python-dotenv==1.0.1
+
+# ── Caller ──
+httpx
+edge-tts

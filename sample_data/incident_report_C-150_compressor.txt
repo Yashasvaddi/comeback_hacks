@@ -1,0 +1,41 @@
+INCIDENT INVESTIGATION REPORT — INC-2024-0731
+Classification: Process Safety Incident (High Severity)
+Date of Incident: 2024-07-28, 03:42 hrs
+Location: Unit 2 — Gas Compression Area
+Asset Tag: C-150
+Equipment: Reciprocating Compressor, Ariel JGK/4
+Reported by: Night Shift Operator (P. Verma); Investigated by: A. Mehta (Maintenance Engineer) and S. Nair (Inspector)
+
+SUMMARY
+At 03:42 hrs, Reciprocating Compressor C-150 tripped on high discharge temperature
+(154 degC against a 150 degC trip setpoint). A subsequent inspection found a cracked
+discharge valve plate on the 2nd-stage cylinder and evidence of lubricant carbonization.
+No injuries occurred; the unit was safely isolated under the Permit-to-Work system.
+
+SEQUENCE OF EVENTS
+- 2024-07-26: Inspection logged rod-drop at 0.48 mm (threshold 0.50 mm) — flagged as a watch item.
+- 2024-07-28 02:10: Discharge temperature began trending upward from 142 degC.
+- 2024-07-28 03:42: High-temperature trip activated; compressor shut down automatically.
+- 2024-07-28 04:30: Area isolated, locked out, and tagged out (PTW-4102).
+
+IMMEDIATE CAUSE
+Cracked 2nd-stage discharge valve plate causing internal gas recirculation and heat buildup.
+
+CONTRIBUTING FACTORS
+- Valve plates had exceeded the OEM-recommended 8,000-hour replacement interval (last replaced at
+  9,200 running hours).
+- Lubricant degradation reduced cooling effectiveness; oil analysis showed high TAN (total acid number).
+- The rising rod-drop trend was noted but not escalated to a work order.
+
+ROOT CAUSES
+- Inadequate valve-plate replacement schedule for high-duty reciprocating service.
+- No automated escalation linking condition-monitoring alarms to the maintenance work-order system.
+
+RECOMMENDATIONS
+- Reduce 2nd-stage valve-plate replacement interval to 6,000 hours for C-150.
+- Add automated alarm-to-work-order escalation for rod-drop and discharge-temperature trends.
+- Include oil TAN trending in the monthly condition-monitoring review.
+
+REGULATORY NOTES
+Investigated and documented per OISD-STD-118 (incident reporting and investigation).
+Permit-to-Work executed under Factory Act 1948 requirements.

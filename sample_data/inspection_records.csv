@@ -1,0 +1,11 @@
+Date,Asset Tag,Equipment,Location,Parameter,Reading,Unit,Threshold,Status,Inspector
+2024-03-01,P-101,Centrifugal Pump,Unit 3,Vibration RMS,3.2,mm/s,4.5,OK,R. Sharma
+2024-04-01,P-101,Centrifugal Pump,Unit 3,Vibration RMS,5.6,mm/s,4.5,ALARM,R. Sharma
+2024-05-01,P-101,Centrifugal Pump,Unit 3,Vibration RMS,7.1,mm/s,4.5,ALARM,R. Sharma
+2024-05-12,P-101,Centrifugal Pump,Unit 3,Vibration RMS,2.3,mm/s,4.5,OK,R. Sharma
+2024-03-15,V-200,Pressure Vessel,Unit 3,Wall Thickness,12.4,mm,11.0,OK,S. Nair
+2024-03-15,V-200,Pressure Vessel,Unit 3,Relief Valve Set,18.5,bar,18.0,OK,S. Nair
+2024-04-10,E-301,Heat Exchanger,Unit 4,Tube Fouling,0.0012,m2K/W,0.0020,OK,S. Nair
+2024-05-02,C-150,Reciprocating Compressor,Unit 2,Discharge Temp,142,degC,150,OK,A. Mehta
+2024-05-02,C-150,Reciprocating Compressor,Unit 2,Rod Drop,0.45,mm,0.50,OK,A. Mehta
+2024-06-01,P-101,Centrifugal Pump,Unit 3,Bearing Temp,68,degC,80,OK,R. Sharma
