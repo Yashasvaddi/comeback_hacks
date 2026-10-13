@@ -1,7 +1,9 @@
 import asyncio
 
 import csv
+
 import os
+
 import time
 
 import httpx
@@ -18,7 +20,7 @@ from services.incident_service import IncidentService
 
 import logging
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("ikb")
 
 DATASET_DIR = (
 
@@ -125,13 +127,28 @@ class DataStreamService:
         self._loaded = False
 
         # Incident events are emitted once per threshold transition. External
+
         # delivery is dispatched asynchronously so telemetry processing does
+
         # not wait for WhatsApp or Vapi responses.
+
         self._incident_service = IncidentService()
+
         self._notification_tasks: set[asyncio.Task] = set()
+
         # Per-pump/per-severity cooldowns prevent notification floods.
+
         self._last_notification_at: dict[tuple[str, str], float] = {}
+
         self._pending_notifications: set[tuple[str, str]] = set()
+
+        # Serializes escalation for each pump: RED waits until the YELLOW
+
+        # WhatsApp attempt finishes, then waits 4.5 seconds before calling.
+
+        self._whatsapp_finished: dict[str, asyncio.Event] = {}
+
+        self._yellow_queued_for_incident: set[str] = set()
 
         # Incident/task state is driven by actual records from the active CSV.
 
@@ -488,150 +505,328 @@ class DataStreamService:
             self.clients.discard(client)
 
     def _queue_incident_notification_locked(
+
         self,
+
         incident_event: dict[str, Any],
+
         *,
+
         delay_seconds: float,
+
         cooldown_seconds: float,
+
     ) -> None:
+
         """Queue a notification only when its per-pump cooldown has elapsed."""
+
         pump_id = str(incident_event.get("pump_id", "P-101"))
+
         severity = str(incident_event.get("severity", ""))
+
         key = (pump_id, severity)
+
         now = time.monotonic()
 
         if key in self._pending_notifications:
+
             return
 
         last_queued = self._last_notification_at.get(key)
+
         if last_queued is not None and now - last_queued < cooldown_seconds:
+
             return
 
         # Start cooldown at queue time so slow API requests cannot pile up.
+
         self._last_notification_at[key] = now
+
         self._pending_notifications.add(key)
+
+        if severity == "YELLOW":
+
+            self._yellow_queued_for_incident.add(pump_id)
+
+            self._whatsapp_finished[pump_id] = asyncio.Event()
+
         task = asyncio.create_task(
+
             self._dispatch_after_delay(incident_event, delay_seconds, key),
+
             name=f"cortex-notify-{pump_id}-{severity}",
+
         )
+
         self._notification_tasks.add(task)
+
         task.add_done_callback(self._notification_tasks.discard)
 
     async def _dispatch_after_delay(
+
         self,
+
         incident_event: dict[str, Any],
+
         delay_seconds: float,
+
         key: tuple[str, str],
+
     ) -> None:
-        """Delay YELLOW and skip it if the pump becomes RED during the delay."""
+
+        """Dispatch YELLOW first, then sequence RED after the WhatsApp attempt."""
+
+        pump_id, severity = key
+
         try:
-            if delay_seconds:
-                await asyncio.sleep(delay_seconds)
 
-            current_state = self._incident_service.get_state(key[0])
-            if current_state["severity"] != key[1]:
-                logger.info(
-                    "Skipping stale %s notification for %s; current severity is %s.",
-                    key[1],
-                    key[0],
-                    current_state["severity"],
-                )
-                return
+            if severity == "YELLOW":
 
-            await self._dispatch_incident_action(incident_event)
+                if delay_seconds:
+
+                    await asyncio.sleep(delay_seconds)
+
+                # Do not discard this message merely because readings escalated
+
+                # to RED during the 3-second wait. It must go out first.
+
+                await self._dispatch_incident_action(incident_event)
+
+            elif severity == "RED":
+
+                # A RED incident may arrive before the delayed YELLOW task runs.
+
+                # Wait for that task to finish its WhatsApp API attempt, then
+
+                # leave a visible 4.5-second gap before starting the Vapi call.
+
+                if pump_id in self._yellow_queued_for_incident:
+
+                    finished = self._whatsapp_finished.setdefault(
+
+                        pump_id, asyncio.Event()
+
+                    )
+
+                    await finished.wait()
+
+                    await asyncio.sleep(4.5)
+
+                elif delay_seconds:
+
+                    await asyncio.sleep(delay_seconds)
+
+                await self._dispatch_incident_action(incident_event)
+
         finally:
+
             self._pending_notifications.discard(key)
 
+            if severity == "YELLOW":
+
+                self._whatsapp_finished.setdefault(pump_id, asyncio.Event()).set()
+
+            elif severity == "RED":
+
+                self._yellow_queued_for_incident.discard(pump_id)
+
     async def _dispatch_incident_action(self, incident_event: dict[str, Any]) -> None:
+
         """Deliver one incident notification through the existing API routers."""
+
         base_url = os.getenv("CORTEX_API_BASE_URL", "http://127.0.0.1:8000").rstrip("/")
+
         severity = incident_event.get("severity")
+
         pump_id = str(incident_event.get("pump_id", "P-101"))
+
         sensors = ", ".join(incident_event.get("abnormal_fields", [])) or "unknown sensors"
+
         detected_at = str(incident_event.get("timestamp", _timestamp()))
+
         request_id = f"cortex-{pump_id}-{severity}-{detected_at}"
 
         try:
+
             async with httpx.AsyncClient(timeout=25.0) as client:
+
                 if severity == "YELLOW":
+
                     recipient = os.getenv("CORTEX_WHATSAPP_RECIPIENT", "").strip()
+
                     if not recipient:
+
                         logger.error(
+
                             "YELLOW incident detected, but CORTEX_WHATSAPP_RECIPIENT is not configured; "
+
                             "WhatsApp alert was not sent."
+
                         )
+
                         return
 
                     body = (
+
                         f"CORTEX PUMP WARNING\n"
+
                         f"Pump: {pump_id}\n"
+
                         f"{incident_event.get('consecutive_abnormal', 14)} consecutive abnormal sensor readings detected.\n"
+
                         f"Abnormal sensors: {sensors}\n"
+
                         f"Detected at: {detected_at}\n"
+
                         "Please inspect the pump and acknowledge this alert."
+
                     )
+
                     response = await client.post(
+
                         f"{base_url}/api/whatsapp/send",
+
                         json={"to": recipient, "body": body},
+
                     )
+
                     response.raise_for_status()
+
                     logger.info(
+
                         "CORTEX WhatsApp alert accepted for pump %s (HTTP %s).",
+
                         pump_id,
+
                         response.status_code,
+
                     )
 
                 elif severity == "RED":
+
                     recipient = os.getenv("CORTEX_TECHNICIAN_PHONE_NUMBER", "").strip()
+
                     if not recipient:
+
                         logger.error(
+
                             "RED incident detected, but CORTEX_TECHNICIAN_PHONE_NUMBER is not configured; "
+
                             "Vapi call was not initiated."
+
                         )
+
                         return
 
                     payload = {
+
                         "customer_number": recipient,
+
                         "recipient_name": os.getenv("CORTEX_TECHNICIAN_NAME", "Technician"),
+
                         "recipient_role": "Responsible maintenance technician",
-                        "incident_id": request_id,
-                        "incident_title": f"Critical pump incident on {pump_id}",
-                        "detected_at": detected_at,
-                        "asset": pump_id,
-                        "affected_system": "Industrial pump monitoring",
-                        "issue": f"More than 15 consecutive abnormal readings. Abnormal sensors: {sensors}.",
-                        "severity": "Critical",
-                        "incident_status": "Open",
-                        "recommended_action": (
-                            f"Urgently inspect {pump_id} and investigate abnormal readings from: {sensors}."
+
+                        # Senior escalation contact
+
+                        "escalation_contact": os.getenv(
+
+                            "CORTEX_SENIOR_NAME", "Senior Maintenance Engineer"
+
                         ),
-                        "supporting_evidence": f"Consecutive abnormal readings: {incident_event.get('consecutive_abnormal')}; sensors: {sensors}.",
-                        "call_objective": "Notify the technician of the critical pump incident and obtain acknowledgement.",
-                        "required_acknowledgement": "Confirm receipt of the critical alert and whether you can take responsibility for the response.",
+
+                        "escalation_phone_number": (
+                            os.getenv("CORTEX_SENIOR_PHONE_NUMBER", "").strip()
+                            or "+918999189384"
+                        ),
+
+                        "incident_id": request_id,
+
+                        "incident_title": f"Critical pump incident on {pump_id}",
+
+                        "detected_at": detected_at,
+
+                        "asset": pump_id,
+
+                        "affected_system": "Industrial pump monitoring",
+
+                        "issue": f"More than 15 consecutive abnormal readings. Abnormal sensors: {sensors}.",
+
+                        "severity": "Critical",
+
+                        "incident_status": "Open",
+
+                        "recommended_action": (
+
+                            f"Urgently inspect {pump_id} and investigate abnormal readings from: {sensors}."
+
+                        ),
+
+                        "supporting_evidence": (
+
+                            f"Consecutive abnormal readings: "
+
+                            f"{incident_event.get('consecutive_abnormal')}; sensors: {sensors}."
+
+                        ),
+
+                        "call_objective": (
+
+                            "Notify the technician of the critical pump incident and obtain acknowledgement."
+
+                        ),
+
+                        "required_acknowledgement": (
+
+                            "Confirm receipt of the critical alert and whether you can take responsibility for the response."
+
+                        ),
+
                         "request_id": request_id,
+
                     }
+
                     response = await client.post(
+
                         f"{base_url}/api/incident-calls",
+
                         json=payload,
+
                     )
+
                     response.raise_for_status()
+
                     result = response.json()
+
                     logger.info(
+
                         "CORTEX Vapi call request accepted for pump %s; call_id=%s.",
+
                         pump_id,
+
                         result.get("call_id"),
+
                     )
 
         except httpx.HTTPStatusError as exc:
+
             logger.error(
+
                 "CORTEX %s delivery failed (HTTP %s): %s",
+
                 severity,
+
                 exc.response.status_code,
+
                 exc.response.text[:1000],
+
             )
+
         except httpx.HTTPError:
+
             logger.exception("CORTEX %s delivery failed due to an HTTP/network error.", severity)
+
         except Exception:
+
             logger.exception("Unexpected error while dispatching CORTEX %s incident.", severity)
 
     def _process_record_locked(self, dataset: str, record: dict[str, Any]) -> bool:
@@ -641,85 +836,155 @@ class DataStreamService:
         now = _now()
 
         # Pump-level incident detection: a reading is abnormal when any
+
         # configured sensor violates its existing threshold.
+
         abnormal_fields: list[str] = []
+
         for sensor_name, sensor_rule in SENSOR_RULES.items():
+
             sensor_value = _number(record.get(sensor_name))
+
             if sensor_value is None:
+
                 continue
 
             sensor_threshold = float(sensor_rule["threshold"])
+
             sensor_abnormal = (
+
                 sensor_value > sensor_threshold
+
                 if sensor_rule["direction"] == "high"
+
                 else sensor_value < sensor_threshold
+
             )
+
             if sensor_abnormal:
+
                 abnormal_fields.append(sensor_name)
 
         incident_event = self._incident_service.process_record(
+
             pump_id="P-101",
+
             record=record,
+
             abnormal_fields=abnormal_fields,
+
         )
 
         changed = False
+
         if incident_event:
+
             is_critical = incident_event["severity"] == "RED"
+
             intended_action = incident_event["intended_action"]
+
             sensor_list = ", ".join(incident_event["abnormal_fields"])
+
             self._add_event_locked(
+
                 title="Critical pump incident" if is_critical else "Pump warning",
+
                 message=(
+
                     "More than 15 consecutive abnormal readings detected; technician call escalation."
+
                     if is_critical
+
                     else "More than 13 consecutive abnormal readings detected; WhatsApp alert escalation."
+
                 ),
+
                 source="CORTEX Incident Engine",
+
                 event_type="activity",
+
                 severity="critical" if is_critical else "warning",
+
                 status="notification_queued",
+
                 details=(
+
                     f"Pump: {incident_event['pump_id']}; "
+
                     f"consecutive readings: {incident_event['consecutive_abnormal']}; "
+
                     f"abnormal sensors: {sensor_list}; "
+
                     f"intended action: {intended_action}."
+
                 ),
+
                 issue_key=f"incident:{dataset}:{incident_event['severity']}:{incident_event['timestamp']}",
+
             )
+
             changed = True
 
         # Check cadence on every row so a continuing incident can notify again
-        # after its cooldown. YELLOW: wait 3s, then 60s between sends.
-        # RED: call immediately, then 300s between call attempts.
+
+        # after its cooldown. YELLOW waits 3s before WhatsApp. RED waits for the
+
+        # WhatsApp attempt to finish, then 4.5s before Vapi; calls cool down 300s.
+
         current_state = self._incident_service.get_state("P-101")
+
         consecutive = current_state["consecutive_abnormal"]
+
         severity = current_state["severity"]
+
         current_event = {
+
             "pump_id": "P-101",
+
             "severity": severity,
+
             "consecutive_abnormal": consecutive,
+
             "abnormal_fields": abnormal_fields,
+
             "timestamp": _timestamp(now),
+
             "record_timestamp": record.get("timestamp"),
+
             "intended_action": (
+
                 "WHATSAPP_MESSAGE" if severity == "YELLOW"
+
                 else "TECHNICIAN_CALL" if severity == "RED"
+
                 else None
+
             ),
+
         }
 
         if severity == "YELLOW" and consecutive > 13:
+
             self._queue_incident_notification_locked(
+
                 current_event,
+
                 delay_seconds=3,
+
                 cooldown_seconds=60,
+
             )
+
         elif severity == "RED" and consecutive > 15:
+
             self._queue_incident_notification_locked(
+
                 current_event,
+
                 delay_seconds=0,
+
                 cooldown_seconds=300,
+
             )
 
         for sensor, rule in SENSOR_RULES.items():
